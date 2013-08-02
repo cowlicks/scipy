@@ -580,6 +580,11 @@ class _cs_matrix(_data_matrix, _minmax_mixin, IndexMixin):
             raise IndexError("invalid index")
 
     def __setitem__(self, index, x):
+        if isspmatrix(index):
+            if issubclass(index.dtype.type, (np.bool_, np.bool, bool)):
+                self._set_boolean_spmatrix(index, x)
+                return
+
         # Process arrays from IndexMixin
         i, j = self._unpack_index(index)
         i, j = self._index_to_arrays(i, j)
@@ -753,6 +758,19 @@ class _cs_matrix(_data_matrix, _minmax_mixin, IndexMixin):
             raise ValueError('nonzero entry (%d,%d) occurs more than once'
                              % (row,col))
 
+        self.check_format(full_check=True)
+
+    def _set_boolean_spmatrix(self, index, x):
+        if not issubclass(index.dtype.type, (np.bool_, np.bool, bool)):
+            raise VauleError('index must be a boolean sparse matrix.')
+
+        """This probably has the worst roundoff."""
+        if not index.format == 'csr':
+            index = index.tocsr()
+        res = (self - self.multiply(index)) + (index*x)
+        self.data = res.data
+        self.indices = res.indices
+        self.indptr = res.indptr
         self.check_format(full_check=True)
 
     ######################
