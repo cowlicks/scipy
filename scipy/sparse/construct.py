@@ -8,8 +8,6 @@ __all__ = ['spdiags', 'eye', 'identity', 'kron', 'kronsum',
             'hstack', 'vstack', 'bmat', 'rand', 'diags', 'block_diag']
 
 
-from warnings import warn
-
 import numpy as np
 
 from .sputils import upcast
@@ -18,7 +16,6 @@ from .csr import csr_matrix
 from .csc import csc_matrix
 from .bsr import bsr_matrix
 from .coo import coo_matrix
-from .lil import lil_matrix
 from .dia import dia_matrix
 
 from .base import issparse
