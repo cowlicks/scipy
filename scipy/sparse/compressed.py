@@ -87,6 +87,27 @@ class _cs_matrix(_data_matrix, _minmax_mixin, IndexMixin):
         return int(self.indptr[-1])
     nnz = property(fget=getnnz)
 
+    def diagonal(self):
+        """Returns the main diagonal of the matrix
+        """
+        # TODO support k-th diagonal
+        fn = getattr(sparsetools, self.format + "_diagonal")
+        y = np.empty(min(self.shape), dtype=upcast(self.dtype))
+        fn(self.shape[0], self.shape[1], self.indptr, self.indices, self.data, y)
+        return y
+
+    def sum(self, axis=None):
+        """Sum the matrix over the given axis.  If the axis is None, sum
+        over both rows and columns, returning a scalar.
+        """
+        # The spmatrix base class already does axis=0 and axis=1 efficiently
+        # so we only do the case axis=None here
+        if axis is None:
+            return self.data.sum()
+        else:
+            return spmatrix.sum(self,axis)
+            raise ValueError("axis out of bounds")
+
     def _set_self(self, other, copy=False):
         """take the member variables of other and assign them to self"""
 
@@ -97,73 +118,6 @@ class _cs_matrix(_data_matrix, _minmax_mixin, IndexMixin):
         self.indices = other.indices
         self.indptr = other.indptr
         self.shape = other.shape
-
-    def check_format(self, full_check=True):
-        """check whether the matrix format is valid
-
-        Parameters
-        ==========
-
-            - full_check : {bool}
-                - True  - rigorous check, O(N) operations : default
-                - False - basic check, O(1) operations
-
-        """
-        # use _swap to determine proper bounds
-        major_name,minor_name = self._swap(('row','column'))
-        major_dim,minor_dim = self._swap(self.shape)
-
-        # index arrays should have integer data types
-        if self.indptr.dtype.kind != 'i':
-            warn("indptr array has non-integer dtype (%s)"
-                    % self.indptr.dtype.name)
-        if self.indices.dtype.kind != 'i':
-            warn("indices array has non-integer dtype (%s)"
-                    % self.indices.dtype.name)
-
-        # only support 32-bit ints for now
-        self.indptr = np.asarray(self.indptr, dtype=np.intc)
-        self.indices = np.asarray(self.indices, dtype=np.intc)
-        self.data = to_native(self.data)
-
-        # check array shapes
-        if np.rank(self.data) != 1 or np.rank(self.indices) != 1 or np.rank(self.indptr) != 1:
-            raise ValueError('data, indices, and indptr should be rank 1')
-
-        # check index pointer
-        if (len(self.indptr) != major_dim + 1):
-            raise ValueError("index pointer size (%d) should be (%d)" %
-                                (len(self.indptr), major_dim + 1))
-        if (self.indptr[0] != 0):
-            raise ValueError("index pointer should start with 0")
-
-        # check index and data arrays
-        if (len(self.indices) != len(self.data)):
-            raise ValueError("indices and data should have the same size")
-        if (self.indptr[-1] > len(self.indices)):
-            raise ValueError("Last value of index pointer should be less than "
-                                "the size of index and data arrays")
-
-        self.prune()
-
-        if full_check:
-            # check format validity (more expensive)
-            if self.nnz > 0:
-                if self.indices.max() >= minor_dim:
-                    raise ValueError("%s index values must be < %d" %
-                                        (minor_name,minor_dim))
-                if self.indices.min() < 0:
-                    raise ValueError("%s index values must be >= 0" %
-                                        minor_name)
-                if np.diff(self.indptr).min() < 0:
-                    raise ValueError("index pointer values must form a "
-                                        "non-decreasing sequence")
-
-        # if not self.has_sorted_indices():
-        #    warn('Indices were not in sorted order.  Sorting indices.')
-        #    self.sort_indices()
-        #    assert(self.has_sorted_indices())
-        # TODO check for duplicates?
 
     #######################
     # Boolean comparisons #
@@ -527,27 +481,6 @@ class _cs_matrix(_data_matrix, _minmax_mixin, IndexMixin):
 
         return self.__class__((data,indices,indptr),shape=(M,N))
 
-    def diagonal(self):
-        """Returns the main diagonal of the matrix
-        """
-        # TODO support k-th diagonal
-        fn = getattr(sparsetools, self.format + "_diagonal")
-        y = np.empty(min(self.shape), dtype=upcast(self.dtype))
-        fn(self.shape[0], self.shape[1], self.indptr, self.indices, self.data, y)
-        return y
-
-    def sum(self, axis=None):
-        """Sum the matrix over the given axis.  If the axis is None, sum
-        over both rows and columns, returning a scalar.
-        """
-        # The spmatrix base class already does axis=0 and axis=1 efficiently
-        # so we only do the case axis=None here
-        if axis is None:
-            return self.data.sum()
-        else:
-            return spmatrix.sum(self,axis)
-            raise ValueError("axis out of bounds")
-
     #######################
     # Getting and Setting #
     #######################
@@ -792,6 +725,73 @@ class _cs_matrix(_data_matrix, _minmax_mixin, IndexMixin):
     ##############################################################
     # methods that examine or modify the internal data structure #
     ##############################################################
+
+    def check_format(self, full_check=True):
+        """check whether the matrix format is valid
+
+        Parameters
+        ==========
+
+            - full_check : {bool}
+                - True  - rigorous check, O(N) operations : default
+                - False - basic check, O(1) operations
+
+        """
+        # use _swap to determine proper bounds
+        major_name,minor_name = self._swap(('row','column'))
+        major_dim,minor_dim = self._swap(self.shape)
+
+        # index arrays should have integer data types
+        if self.indptr.dtype.kind != 'i':
+            warn("indptr array has non-integer dtype (%s)"
+                    % self.indptr.dtype.name)
+        if self.indices.dtype.kind != 'i':
+            warn("indices array has non-integer dtype (%s)"
+                    % self.indices.dtype.name)
+
+        # only support 32-bit ints for now
+        self.indptr = np.asarray(self.indptr, dtype=np.intc)
+        self.indices = np.asarray(self.indices, dtype=np.intc)
+        self.data = to_native(self.data)
+
+        # check array shapes
+        if np.rank(self.data) != 1 or np.rank(self.indices) != 1 or np.rank(self.indptr) != 1:
+            raise ValueError('data, indices, and indptr should be rank 1')
+
+        # check index pointer
+        if (len(self.indptr) != major_dim + 1):
+            raise ValueError("index pointer size (%d) should be (%d)" %
+                                (len(self.indptr), major_dim + 1))
+        if (self.indptr[0] != 0):
+            raise ValueError("index pointer should start with 0")
+
+        # check index and data arrays
+        if (len(self.indices) != len(self.data)):
+            raise ValueError("indices and data should have the same size")
+        if (self.indptr[-1] > len(self.indices)):
+            raise ValueError("Last value of index pointer should be less than "
+                                "the size of index and data arrays")
+
+        self.prune()
+
+        if full_check:
+            # check format validity (more expensive)
+            if self.nnz > 0:
+                if self.indices.max() >= minor_dim:
+                    raise ValueError("%s index values must be < %d" %
+                                        (minor_name,minor_dim))
+                if self.indices.min() < 0:
+                    raise ValueError("%s index values must be >= 0" %
+                                        minor_name)
+                if np.diff(self.indptr).min() < 0:
+                    raise ValueError("index pointer values must form a "
+                                        "non-decreasing sequence")
+
+        # if not self.has_sorted_indices():
+        #    warn('Indices were not in sorted order.  Sorting indices.')
+        #    self.sort_indices()
+        #    assert(self.has_sorted_indices())
+        # TODO check for duplicates?
 
     def eliminate_zeros(self):
         """Remove zero entries from the matrix
