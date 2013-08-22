@@ -10,7 +10,7 @@ import numpy as np
 
 from .base import isspmatrix, _formats
 from .data import _data_matrix
-from .sputils import isshape, upcast, upcast_char, getdtype
+from .sputils import isshape, upcast_char, getdtype
 from .sparsetools import dia_matvec
 
 
