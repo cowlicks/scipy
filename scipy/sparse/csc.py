@@ -5,12 +5,10 @@ __docformat__ = "restructuredtext en"
 
 __all__ = ['csc_matrix', 'isspmatrix_csc']
 
-from warnings import warn
 
 import numpy as np
 from scipy.lib.six.moves import xrange
 
-from .base import isspmatrix
 from .sparsetools import csc_tocsr
 from . import sparsetools
 from .sputils import upcast, isintlike, IndexMixin
