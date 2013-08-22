@@ -4,13 +4,10 @@ from __future__ import division, print_function, absolute_import
 __all__ = ['spmatrix', 'isspmatrix', 'issparse',
         'SparseWarning','SparseEfficiencyWarning']
 
-import sys
-from warnings import warn
-
 import numpy as np
 
 from scipy.lib.six.moves import xrange
-from .sputils import isdense, isscalarlike, isintlike
+from .sputils import isscalarlike, isintlike
 
 
 class SparseWarning(Warning):
