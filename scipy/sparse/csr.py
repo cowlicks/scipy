@@ -7,8 +7,6 @@ __docformat__ = "restructuredtext en"
 __all__ = ['csr_matrix', 'isspmatrix_csr']
 
 
-from warnings import warn
-
 import numpy as np
 from scipy.lib.six.moves import xrange
 
@@ -178,6 +176,18 @@ class csr_matrix(_cs_matrix, IndexMixin):
 
             return bsr_matrix((data,indices,indptr), shape=self.shape)
 
+    def getrow(self, i):
+        """Returns a copy of row i of the matrix, as a (1 x n)
+        CSR matrix (row vector).
+        """
+        return self._get_submatrix(i, slice(None))
+
+    def getcol(self, i):
+        """Returns a copy of column i of the matrix, as a (m x 1)
+        CSR matrix (column vector).
+        """
+        return self._get_submatrix(slice(None), i)
+
     # these functions are used by the parent class (_cs_matrix)
     # to remove redudancy between csc_matrix and csr_matrix
     def _swap(self,x):
@@ -304,18 +314,6 @@ class csr_matrix(_cs_matrix, IndexMixin):
             return self.data[start:end][indxs[0]]
         else:
             raise ValueError('nonzero entry (%d,%d) occurs more than once' % (row,col))
-
-    def getrow(self, i):
-        """Returns a copy of row i of the matrix, as a (1 x n)
-        CSR matrix (row vector).
-        """
-        return self._get_submatrix(i, slice(None))
-
-    def getcol(self, i):
-        """Returns a copy of column i of the matrix, as a (m x 1)
-        CSR matrix (column vector).
-        """
-        return self._get_submatrix(slice(None), i)
 
     def _get_row_slice(self, i, cslice):
         """Returns a copy of row self[i, cslice]
