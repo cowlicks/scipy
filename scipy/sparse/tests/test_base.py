@@ -829,9 +829,9 @@ class _TestCommon:
             dat = self.dat_dtypes[dtype]
             datsp = self.datsp_dtypes[dtype]
 
-            a = self.dat.copy()
+            a = dat.copy()
             a[0,2] = 2.0
-            b = self.datsp
+            b = datsp
             c = a + b
             assert_array_equal(c, a + b.todense())
 
@@ -2098,7 +2098,6 @@ class _TestFancyMultidimAssign:
 
         D = np.asmatrix(np.random.rand(5, 7))
         S = self.spmatrix(D)
-        X = np.random.rand(2, 3)
 
         I = [[1, 2, 3], [3, 4, 2]]
         J = [[5, 6, 3], [2, 3, 1]]
@@ -2609,7 +2608,6 @@ class TestDOK(sparse_test_class(slicing=False,
         assert_array_equal(csr.toarray()[m-1,:], zeros(n,))
 
     def test_ctor(self):
-        caught = 0
         # Empty ctor
         assert_raises(TypeError, dok_matrix)
 
