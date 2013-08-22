@@ -10,14 +10,9 @@ __all__ = ['lil_matrix','isspmatrix_lil']
 from bisect import bisect_left
 
 import numpy as np
-from scipy.lib.six.moves import xrange
 
 from .base import spmatrix, isspmatrix
-from .sputils import getdtype, isshape, issequence, isscalarlike, ismatrix, \
-    IndexMixin, upcast_scalar
-
-from warnings import warn
-from .base import SparseEfficiencyWarning
+from .sputils import getdtype, isshape, isscalarlike, IndexMixin, upcast_scalar
 
 
 class lil_matrix(spmatrix, IndexMixin):
@@ -368,8 +363,6 @@ class lil_matrix(spmatrix, IndexMixin):
 
         indptr = np.asarray([len(x) for x in self.rows], dtype=np.intc)
         indptr = np.concatenate((np.array([0], dtype=np.intc), np.cumsum(indptr)))
-
-        nnz = indptr[-1]
 
         indices = []
         for x in self.rows:
